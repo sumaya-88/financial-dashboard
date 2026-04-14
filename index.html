@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apex Bank — Financial Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #0D1B2A;
+    --midblue: #1B3A5C;
+    --accent:  #1E88E5;
+    --sky:     #64B5F6;
+    --green:   #1B8A4E;
+    --red:     #C62828;
+    --gold:    #F9A825;
+    --bg:      #F0F4F8;
+    --card:    #FFFFFF;
+    --border:  #DDE3EB;
+    --text:    #1A2332;
+    --muted:   #5C6B7A;
+    --light:   #E8EEF5;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--midblue) 100%);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 72px;
+    border-bottom: 3px solid var(--accent);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 40px; height: 40px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text h1 { font-family: 'DM Serif Display', serif; color: #fff; font-size: 1.3rem; letter-spacing: 0.5px; }
+  .logo-text p  { color: var(--sky); font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 24px; }
+  .header-badge {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500;
+  }
+  .header-date { color: var(--sky); font-size: 0.8rem; }
+
+  /* ── NAV TABS ── */
+  nav {
+    background: var(--navy); padding: 0 32px;
+    display: flex; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .tab-btn {
+    padding: 12px 20px; background: transparent; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.55); font-family: 'DM Sans', sans-serif;
+    font-size: 0.83rem; font-weight: 500; letter-spacing: 0.3px;
+    border-bottom: 3px solid transparent; transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn:hover  { color: #fff; }
+  .tab-btn.active { color: var(--sky); border-bottom-color: var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { padding: 28px 32px; max-width: 1480px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .section-title {
+    font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--navy);
+    margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .kpi-card {
+    background: var(--card); border-radius: 12px; padding: 20px 22px;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,27,42,0.10); }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi-card.blue::before  { background: var(--accent); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.gold::before  { background: var(--gold); }
+  .kpi-card.red::before   { background: var(--red); }
+  .kpi-label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .kpi-value { font-size: 1.65rem; font-weight: 700; color: var(--navy); line-height: 1; }
+  .kpi-sub   { font-size: 0.78rem; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .kpi-sub.up   { color: var(--green); }
+  .kpi-sub.down { color: var(--red); }
+  .kpi-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 2rem; opacity: .08; }
+
+  /* ── CHARTS ── */
+  .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 28px; }
+  .charts-grid.three { grid-template-columns: repeat(3, 1fr); }
+  .chart-wide { grid-column: span 2; }
+  .chart-card {
+    background: var(--card); border-radius: 12px; padding: 22px 24px;
+    border: 1px solid var(--border);
+  }
+  .chart-card h3 { font-size: 0.88rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; }
+  .chart-container { position: relative; }
+
+  /* ── TABLE ── */
+  .table-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 28px; }
+  .table-card h3 { padding: 18px 22px; font-size: 0.88rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; background: var(--light); text-align: left; font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 11px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F7FAFD; }
+  td.right { text-align: right; font-variant-numeric: tabular-nums; }
+  td.up   { color: var(--green); font-weight: 600; }
+  td.down { color: var(--red);   font-weight: 600; }
+  td.bold { font-weight: 700; }
+
+  /* ── BADGE ── */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+  .badge.good    { background: #E8F5E9; color: var(--green); }
+  .badge.warning { background: #FFF8E1; color: #E65100; }
+  .badge.danger  { background: #FFEBEE; color: var(--red); }
+
+  /* ── SEGMENT BARS ── */
+  .seg-bars { padding: 4px 0; }
+  .seg-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .seg-name { width: 160px; font-size: 0.83rem; font-weight: 500; color: var(--text); flex-shrink: 0; }
+  .seg-bar-wrap { flex: 1; background: var(--light); border-radius: 4px; height: 10px; overflow: hidden; }
+  .seg-bar { height: 100%; border-radius: 4px; transition: width .8s ease; }
+  .seg-val { width: 80px; text-align: right; font-size: 0.83rem; font-weight: 600; color: var(--navy); flex-shrink: 0; }
+
+  /* ── FOOTER ── */
+  footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--border); margin-top: 12px; }
+
+  @media (max-width: 900px) {
+    main { padding: 18px 16px; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-wide { grid-column: span 1; }
+    header { padding: 0 16px; }
+    nav    { padding: 0 16px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏦</div>
+    <div class="logo-text">
+      <h1>APEX BANK</h1>
+      <p>Financial Performance Dashboard</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="header-badge">FY 2020 – 2024</span>
+    <span class="header-date">Last Updated: April 14, 2026</span>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
+  <button class="tab-btn" onclick="switchTab('monthly')">📅 Monthly P&L</button>
+  <button class="tab-btn" onclick="switchTab('assets')">🏛 Asset Quality</button>
+  <button class="tab-btn" onclick="switchTab('segments')">🗂 Business Segments</button>
+  <button class="tab-btn" onclick="switchTab('quarterly')">📈 Quarterly KPIs</button>
+</nav>
+
+<main>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div id="tab-overview" class="tab-panel active">
+  <div class="kpi-grid" id="kpi-overview"></div>
+  <div class="charts-grid">
+    <div class="chart-card chart-wide">
+      <h3>Revenue & Net Income — Annual Trend (USD Millions)</h3>
+      <div class="chart-container" style="height:260px"><canvas id="chart-rev-trend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Profitability Ratios (%)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-margins"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Revenue Breakdown 2024 (USD M)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-rev-breakdown"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>Annual P&L Summary</h3>
+    <table id="table-annual"></table>
+  </div>
+</div>
+
+<!-- ═══════════════ MONTHLY ═══════════════ -->
+<div id="tab-monthly" class="tab-panel">
+  <div class="kpi-grid" id="kpi-monthly"></div>
+  <div class="charts-grid">
+    <div class="chart-card chart-wide">
+      <h3>Monthly Revenue, Expenses & Net Income — FY 2024 (USD Millions)</h3>
+      <div class="chart-container" style="height:260px"><canvas id="chart-monthly-bar"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Net Profit Margin by Month (%)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-monthly-margin"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Monthly Expense Ratio (%)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-monthly-exp"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>Monthly P&L Detail — FY 2024</h3>
+    <table id="table-monthly"></table>
+  </div>
+</div>
+
+<!-- ═══════════════ ASSETS ═══════════════ -->
+<div id="tab-assets" class="tab-panel">
+  <div class="kpi-grid" id="kpi-assets"></div>
+  <div class="charts-grid">
+    <div class="chart-card chart-wide">
+      <h3>Asset Growth — Total Assets, Loans & Deposits (USD Millions)</h3>
+      <div class="chart-container" style="height:260px"><canvas id="chart-asset-growth"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>NPL Ratio (%) — Annual</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-npl"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Capital Adequacy & Liquidity Ratios (%)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-cap"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>Balance Sheet & Asset Quality KPIs</h3>
+    <table id="table-assets"></table>
+  </div>
+</div>
+
+<!-- ═══════════════ SEGMENTS ═══════════════ -->
+<div id="tab-segments" class="tab-panel">
+  <div class="kpi-grid" id="kpi-segments"></div>
+  <div class="charts-grid">
+    <div class="chart-card chart-wide">
+      <h3>Segment Revenue — Annual Comparison (USD Millions)</h3>
+      <div class="chart-container" style="height:270px"><canvas id="chart-seg-stack"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>2024 Segment Revenue Share</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-seg-pie"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>2024 Segment Revenue Breakdown</h3>
+      <div class="seg-bars" id="seg-bars-2024"></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>Segment Revenue by Year (USD Millions)</h3>
+    <table id="table-segments"></table>
+  </div>
+</div>
+
+<!-- ═══════════════ QUARTERLY ═══════════════ -->
+<div id="tab-quarterly" class="tab-panel">
+  <div class="kpi-grid" id="kpi-quarterly"></div>
+  <div class="charts-grid">
+    <div class="chart-card chart-wide">
+      <h3>Quarterly P&L — FY 2024 (USD Millions)</h3>
+      <div class="chart-container" style="height:260px"><canvas id="chart-q-bar"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>EPS by Quarter ($)</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-q-eps"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Return on Equity (%) by Quarter</h3>
+      <div class="chart-container" style="height:240px"><canvas id="chart-q-roe"></canvas></div>
+    </div>
+  </div>
+  <div class="table-card">
+    <h3>Quarterly KPI Scorecard — FY 2024</h3>
+    <table id="table-quarterly"></table>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  Apex Bank Financial Performance Dashboard &nbsp;|&nbsp; All figures in USD Millions &nbsp;|&nbsp; Data is illustrative/synthetic for demonstration purposes
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const DATA = {"annual":[{"Year":2020,"Total_Revenue_M":5200.0,"Interest_Income_M":3000.62,"Fee_Income_M":1088.25,"Other_Income_M":1111.12,"Operating_Expenses_M":2994.78,"Provision_Losses_M":344.45,"EBIT_M":1860.77,"Net_Income_M":1470.01,"Tax_M":390.76,"Net_Profit_Margin_Pct":28.27,"Cost_Income_Ratio_Pct":57.59,"ROE_Pct":10.94,"ROA_Pct":1.05,"EPS":5.45},{"Year":2021,"Total_Revenue_M":5730.81,"Interest_Income_M":3223.49,"Fee_Income_M":1036.26,"Other_Income_M":1471.05,"Operating_Expenses_M":3428.14,"Provision_Losses_M":534.67,"EBIT_M":1768.0,"Net_Income_M":1396.72,"Tax_M":371.28,"Net_Profit_Margin_Pct":24.37,"Cost_Income_Ratio_Pct":59.82,"ROE_Pct":11.27,"ROA_Pct":1.15,"EPS":3.68},{"Year":2022,"Total_Revenue_M":6079.86,"Interest_Income_M":3352.95,"Fee_Income_M":1199.42,"Other_Income_M":1527.48,"Operating_Expenses_M":3389.36,"Provision_Losses_M":513.59,"EBIT_M":2176.91,"Net_Income_M":1719.76,"Tax_M":457.15,"Net_Profit_Margin_Pct":28.29,"Cost_Income_Ratio_Pct":55.75,"ROE_Pct":10.84,"ROA_Pct":1.23,"EPS":4.15},{"Year":2023,"Total_Revenue_M":6769.89,"Interest_Income_M":3839.28,"Fee_Income_M":1272.65,"Other_Income_M":1657.96,"Operating_Expenses_M":3864.62,"Provision_Losses_M":566.62,"EBIT_M":2338.65,"Net_Income_M":1847.54,"Tax_M":491.12,"Net_Profit_Margin_Pct":27.29,"Cost_Income_Ratio_Pct":57.09,"ROE_Pct":10.28,"ROA_Pct":1.49,"EPS":3.64},{"Year":2024,"Total_Revenue_M":6678.42,"Interest_Income_M":3853.0,"Fee_Income_M":1460.07,"Other_Income_M":1365.35,"Operating_Expenses_M":3930.27,"Provision_Losses_M":482.08,"EBIT_M":2266.06,"Net_Income_M":1790.19,"Tax_M":475.87,"Net_Profit_Margin_Pct":26.81,"Cost_Income_Ratio_Pct":58.85,"ROE_Pct":10.59,"ROA_Pct":1.55,"EPS":4.34}],"monthly":[{"Month":"Jan","Year":2024,"Revenue_M":534.01,"Expenses_M":304.23,"Provision_M":32.59,"Net_Income_M":155.78,"Net_Margin_Pct":29.17},{"Month":"Feb","Year":2024,"Revenue_M":604.11,"Expenses_M":335.6,"Provision_M":48.25,"Net_Income_M":174.0,"Net_Margin_Pct":28.8},{"Month":"Mar","Year":2024,"Revenue_M":550.9,"Expenses_M":314.68,"Provision_M":42.09,"Net_Income_M":153.37,"Net_Margin_Pct":27.84},{"Month":"Apr","Year":2024,"Revenue_M":539.6,"Expenses_M":322.78,"Provision_M":44.92,"Net_Income_M":135.8,"Net_Margin_Pct":25.17},{"Month":"May","Year":2024,"Revenue_M":606.8,"Expenses_M":360.25,"Provision_M":47.29,"Net_Income_M":157.41,"Net_Margin_Pct":25.94},{"Month":"Jun","Year":2024,"Revenue_M":605.23,"Expenses_M":330.04,"Provision_M":39.87,"Net_Income_M":185.9,"Net_Margin_Pct":30.72},{"Month":"Jul","Year":2024,"Revenue_M":527.17,"Expenses_M":294.96,"Provision_M":37.78,"Net_Income_M":153.6,"Net_Margin_Pct":29.14},{"Month":"Aug","Year":2024,"Revenue_M":547.31,"Expenses_M":322.76,"Provision_M":38.7,"Net_Income_M":146.82,"Net_Margin_Pct":26.83},{"Month":"Sep","Year":2024,"Revenue_M":548.16,"Expenses_M":313.85,"Provision_M":35.21,"Net_Income_M":157.29,"Net_Margin_Pct":28.69},{"Month":"Oct","Year":2024,"Revenue_M":594.58,"Expenses_M":323.73,"Provision_M":53.28,"Net_Income_M":171.88,"Net_Margin_Pct":28.91},{"Month":"Nov","Year":2024,"Revenue_M":591.91,"Expenses_M":326.69,"Provision_M":35.61,"Net_Income_M":181.39,"Net_Margin_Pct":30.65},{"Month":"Dec","Year":2024,"Revenue_M":595.76,"Expenses_M":346.98,"Provision_M":48.77,"Net_Income_M":158.0,"Net_Margin_Pct":26.52}],"assets":[{"Year":2020,"Total_Assets_M":85000.0,"Total_Loans_M":51377.63,"Total_Deposits_M":61328.18,"NPL_Ratio_Pct":1.47,"Capital_Adequacy_Pct":16.52,"Liquidity_Ratio_Pct":135.58,"Loan_to_Deposit_Pct":83.77},{"Year":2021,"Total_Assets_M":89992.69,"Total_Loans_M":54338.8,"Total_Deposits_M":64674.05,"NPL_Ratio_Pct":1.95,"Capital_Adequacy_Pct":16.05,"Liquidity_Ratio_Pct":135.94,"Loan_to_Deposit_Pct":84.02},{"Year":2022,"Total_Assets_M":98323.28,"Total_Loans_M":61779.75,"Total_Deposits_M":69531.83,"NPL_Ratio_Pct":2.84,"Capital_Adequacy_Pct":16.16,"Liquidity_Ratio_Pct":134.03,"Loan_to_Deposit_Pct":88.85},{"Year":2023,"Total_Assets_M":103938.7,"Total_Loans_M":65442.69,"Total_Deposits_M":76017.02,"NPL_Ratio_Pct":2.18,"Capital_Adequacy_Pct":13.59,"Liquidity_Ratio_Pct":122.7,"Loan_to_Deposit_Pct":86.09},{"Year":2024,"Total_Assets_M":101377.15,"Total_Loans_M":64697.34,"Total_Deposits_M":72876.12,"NPL_Ratio_Pct":2.37,"Capital_Adequacy_Pct":16.68,"Liquidity_Ratio_Pct":126.23,"Loan_to_Deposit_Pct":88.78}],"segments":[{"Year":2020,"Segment":"Retail Banking","Revenue_M":1944.62,"Growth_Pct":1.73},{"Year":2020,"Segment":"Corporate Banking","Revenue_M":630.44,"Growth_Pct":15.85},{"Year":2020,"Segment":"Wealth Management","Revenue_M":513.26,"Growth_Pct":8.79},{"Year":2020,"Segment":"Investment Banking","Revenue_M":637.6,"Growth_Pct":14.15},{"Year":2020,"Segment":"Treasury","Revenue_M":1474.08,"Growth_Pct":15.92},{"Year":2021,"Segment":"Retail Banking","Revenue_M":1665.85,"Growth_Pct":4.75},{"Year":2021,"Segment":"Corporate Banking","Revenue_M":1166.57,"Growth_Pct":16.86},{"Year":2021,"Segment":"Wealth Management","Revenue_M":1084.73,"Growth_Pct":4.46},{"Year":2021,"Segment":"Investment Banking","Revenue_M":131.72,"Growth_Pct":8.38},{"Year":2021,"Segment":"Treasury","Revenue_M":1681.93,"Growth_Pct":12.06},{"Year":2022,"Segment":"Retail Banking","Revenue_M":1623.34,"Growth_Pct":3.57},{"Year":2022,"Segment":"Corporate Banking","Revenue_M":1329.54,"Growth_Pct":16.17},{"Year":2022,"Segment":"Wealth Management","Revenue_M":313.38,"Growth_Pct":2.79},{"Year":2022,"Segment":"Investment Banking","Revenue_M":1369.57,"Growth_Pct":0.9},{"Year":2022,"Segment":"Treasury","Revenue_M":1444.02,"Growth_Pct":7.79},{"Year":2023,"Segment":"Retail Banking","Revenue_M":1998.35,"Growth_Pct":4.42},{"Year":2023,"Segment":"Corporate Banking","Revenue_M":578.88,"Growth_Pct":1.73},{"Year":2023,"Segment":"Wealth Management","Revenue_M":755.48,"Growth_Pct":-1.18},{"Year":2023,"Segment":"Investment Banking","Revenue_M":2724.45,"Growth_Pct":9.82},{"Year":2023,"Segment":"Treasury","Revenue_M":712.72,"Growth_Pct":11.55},{"Year":2024,"Segment":"Retail Banking","Revenue_M":1338.84,"Growth_Pct":4.82},{"Year":2024,"Segment":"Corporate Banking","Revenue_M":407.94,"Growth_Pct":0.27},{"Year":2024,"Segment":"Wealth Management","Revenue_M":1332.13,"Growth_Pct":16.49},{"Year":2024,"Segment":"Investment Banking","Revenue_M":684.9,"Growth_Pct":15.55},{"Year":2024,"Segment":"Treasury","Revenue_M":2914.61,"Growth_Pct":3.16}],"quarterly":[{"Quarter":"Q1","Revenue_M":1718.02,"Expenses_M":997.93,"Net_Income_M":568.87,"EPS":1.38,"ROE_Pct":13.12},{"Quarter":"Q2","Revenue_M":1613.3,"Expenses_M":878.69,"Net_Income_M":580.34,"EPS":1.55,"ROE_Pct":14.6},{"Quarter":"Q3","Revenue_M":1711.29,"Expenses_M":953.1,"Net_Income_M":598.96,"EPS":1.27,"ROE_Pct":13.9},{"Quarter":"Q4","Revenue_M":1777.41,"Expenses_M":1038.63,"Net_Income_M":583.63,"EPS":1.49,"ROE_Pct":13.57}]};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const fmt  = (n, d=1) => n != null ? n.toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}) : '—';
+const fmtM = n => '$' + fmt(n) + 'M';
+const pct  = n => fmt(n) + '%';
+const delta = (cur, prev) => { const d = ((cur-prev)/Math.abs(prev)*100); return {val:d, cls: d>=0?'up':'down', arrow: d>=0?'▲':'▼'}; };
+
+const COLORS = ['#1E88E5','#1B8A4E','#F9A825','#C62828','#7B1FA2','#0097A7'];
+
+const chartDefaults = {
+  plugins: { legend: { labels: { font: { family: 'DM Sans', size: 11 }, color: '#5C6B7A' } } },
+  scales: {
+    x: { ticks: { font: { family: 'DM Sans', size: 11 }, color: '#5C6B7A' }, grid: { color: '#EEF2F7' } },
+    y: { ticks: { font: { family: 'DM Sans', size: 11 }, color: '#5C6B7A' }, grid: { color: '#EEF2F7' } }
+  }
+};
+
+function makeChart(id, type, labels, datasets, opts={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  return new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: { responsive: true, maintainAspectRatio: false, ...chartDefaults, ...opts }
+  });
+}
+
+function kpiCard(label, value, sub, cls='blue', icon='📊') {
+  const updown = sub && sub.includes('▲') ? 'up' : sub && sub.includes('▼') ? 'down' : '';
+  return `<div class="kpi-card ${cls}">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    ${sub ? `<div class="kpi-sub ${updown}">${sub}</div>` : ''}
+    <div class="kpi-icon">${icon}</div>
+  </div>`;
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+const chartInstances = {};
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ═══════════════ OVERVIEW ════════════════════════════════════════════════════
+(function() {
+  const a = DATA.annual;
+  const last = a[4], prev = a[3];
+  const d_rev = delta(last.Total_Revenue_M, prev.Total_Revenue_M);
+  const d_ni  = delta(last.Net_Income_M, prev.Net_Income_M);
+
+  document.getElementById('kpi-overview').innerHTML = [
+    kpiCard('Total Revenue FY24',    fmtM(last.Total_Revenue_M),  `${d_rev.arrow} ${fmt(Math.abs(d_rev.val))}% vs FY23`, 'blue', '💰'),
+    kpiCard('Net Income FY24',       fmtM(last.Net_Income_M),     `${d_ni.arrow} ${fmt(Math.abs(d_ni.val))}% vs FY23`, 'green', '📈'),
+    kpiCard('Net Profit Margin',     pct(last.Net_Profit_Margin_Pct), `FY23: ${pct(prev.Net_Profit_Margin_Pct)}`, 'gold', '🎯'),
+    kpiCard('Cost-to-Income Ratio',  pct(last.Cost_Income_Ratio_Pct), `FY23: ${pct(prev.Cost_Income_Ratio_Pct)}`, 'red', '💸'),
+    kpiCard('Return on Equity',      pct(last.ROE_Pct),           `FY23: ${pct(prev.ROE_Pct)}`, 'blue', '📊'),
+    kpiCard('Return on Assets',      pct(last.ROA_Pct),           `FY23: ${pct(prev.ROA_Pct)}`, 'green', '🏛'),
+    kpiCard('Earnings Per Share',    '$' + fmt(last.EPS, 2),      `FY23: $${fmt(prev.EPS, 2)}`, 'gold', '💵'),
+  ].join('');
+
+  const years = a.map(x => x.Year);
+  makeChart('chart-rev-trend','bar', years, [
+    { label:'Total Revenue ($M)', data: a.map(x=>x.Total_Revenue_M), backgroundColor:'rgba(30,136,229,0.75)', borderRadius:5 },
+    { label:'Net Income ($M)',    data: a.map(x=>x.Net_Income_M),    backgroundColor:'rgba(27,138,78,0.75)',  borderRadius:5 },
+    { label:'EBIT ($M)',          data: a.map(x=>x.EBIT_M),          backgroundColor:'rgba(249,168,37,0.6)', borderRadius:5 },
+  ], { plugins: { legend: chartDefaults.plugins.legend } });
+
+  makeChart('chart-margins','line', years, [
+    { label:'Net Margin (%)',      data: a.map(x=>x.Net_Profit_Margin_Pct), borderColor:'#1E88E5', tension:.4, fill:false, pointRadius:4 },
+    { label:'ROE (%)',             data: a.map(x=>x.ROE_Pct),              borderColor:'#1B8A4E', tension:.4, fill:false, pointRadius:4 },
+    { label:'Cost-Income (%)',     data: a.map(x=>x.Cost_Income_Ratio_Pct),borderColor:'#C62828', tension:.4, fill:false, pointRadius:4, borderDash:[4,4] },
+  ], { plugins: { legend: chartDefaults.plugins.legend } });
+
+  makeChart('chart-rev-breakdown','doughnut',
+    ['Interest Income','Fee Income','Other Income'],
+    [{ data:[last.Interest_Income_M, last.Fee_Income_M, last.Other_Income_M],
+       backgroundColor:['#1E88E5','#1B8A4E','#F9A825'], borderWidth:2, borderColor:'#fff' }],
+    { plugins: { legend: { position:'right', labels: chartDefaults.plugins.legend.labels } }, scales: {} }
+  );
+
+  const tbody = a.map((r,i) => {
+    const p = i > 0 ? a[i-1] : null;
+    const d = p ? delta(r.Total_Revenue_M, p.Total_Revenue_M) : null;
+    return `<tr>
+      <td class="bold">${r.Year}</td>
+      <td class="right">${fmtM(r.Total_Revenue_M)}</td>
+      <td class="right">${fmtM(r.Operating_Expenses_M)}</td>
+      <td class="right">${fmtM(r.EBIT_M)}</td>
+      <td class="right">${fmtM(r.Net_Income_M)}</td>
+      <td class="right">${pct(r.Net_Profit_Margin_Pct)}</td>
+      <td class="right">${pct(r.Cost_Income_Ratio_Pct)}</td>
+      <td class="right">${pct(r.ROE_Pct)}</td>
+      <td class="right ${d ? d.cls : ''}">${d ? d.arrow + ' ' + fmt(Math.abs(d.val)) + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-annual').innerHTML =
+    `<thead><tr><th>Year</th><th>Revenue</th><th>Op. Expenses</th><th>EBIT</th><th>Net Income</th><th>NP Margin</th><th>C/I Ratio</th><th>ROE</th><th>Rev YoY</th></tr></thead><tbody>${tbody}</tbody>`;
+})();
+
+// ═══════════════ MONTHLY ═════════════════════════════════════════════════════
+(function() {
+  const m = DATA.monthly;
+  const totalRev = m.reduce((a,x)=>a+x.Revenue_M, 0);
+  const totalNI  = m.reduce((a,x)=>a+x.Net_Income_M, 0);
+  const avgMargin = m.reduce((a,x)=>a+x.Net_Margin_Pct,0)/m.length;
+  const best = m.reduce((a,b) => b.Net_Income_M>a.Net_Income_M ? b : a);
+
+  document.getElementById('kpi-monthly').innerHTML = [
+    kpiCard('Full-Year Revenue 2024',   fmtM(totalRev),            'Sum of 12 months', 'blue','💰'),
+    kpiCard('Full-Year Net Income 2024',fmtM(totalNI),             `Avg ${fmtM(totalNI/12)}/month`, 'green','📈'),
+    kpiCard('Avg Net Margin',           pct(avgMargin),            '12-month average', 'gold','🎯'),
+    kpiCard('Best Month',               best.Month,                fmtM(best.Net_Income_M) + ' net income', 'blue','🏆'),
+  ].join('');
+
+  const labs = m.map(x=>x.Month);
+  makeChart('chart-monthly-bar','bar', labs, [
+    { label:'Revenue ($M)',    data:m.map(x=>x.Revenue_M),    backgroundColor:'rgba(30,136,229,0.75)', borderRadius:4 },
+    { label:'Expenses ($M)',   data:m.map(x=>x.Expenses_M),   backgroundColor:'rgba(198,40,40,0.65)', borderRadius:4 },
+    { label:'Net Income ($M)', data:m.map(x=>x.Net_Income_M), backgroundColor:'rgba(27,138,78,0.75)', borderRadius:4 },
+  ]);
+
+  makeChart('chart-monthly-margin','line', labs, [
+    { label:'Net Margin (%)', data:m.map(x=>x.Net_Margin_Pct), borderColor:'#1E88E5',
+      backgroundColor:'rgba(30,136,229,0.08)', fill:true, tension:.4, pointRadius:4 }
+  ]);
+
+  makeChart('chart-monthly-exp','bar', labs, [
+    { label:'Expense Ratio (%)', data:m.map(x=>+(x.Expenses_M/x.Revenue_M*100).toFixed(1)),
+      backgroundColor: m.map(x => x.Expenses_M/x.Revenue_M > 0.58 ? 'rgba(198,40,40,0.7)' : 'rgba(249,168,37,0.7)'),
+      borderRadius:4 }
+  ]);
+
+  const tbody = m.map((r,i) => {
+    const d = i>0 ? delta(r.Revenue_M, m[i-1].Revenue_M) : null;
+    return `<tr>
+      <td class="bold">${r.Month}</td>
+      <td class="right">${fmtM(r.Revenue_M)}</td>
+      <td class="right">${fmtM(r.Expenses_M)}</td>
+      <td class="right">${fmtM(r.Provision_M)}</td>
+      <td class="right">${fmtM(r.Net_Income_M)}</td>
+      <td class="right">${pct(r.Net_Margin_Pct)}</td>
+      <td class="right ${d?d.cls:''}">${d ? d.arrow+' '+fmt(Math.abs(d.val))+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-monthly').innerHTML =
+    `<thead><tr><th>Month</th><th>Revenue</th><th>Expenses</th><th>Provision</th><th>Net Income</th><th>Margin</th><th>MoM Δ</th></tr></thead><tbody>${tbody}</tbody>`;
+})();
+
+// ═══════════════ ASSETS ══════════════════════════════════════════════════════
+(function() {
+  const as = DATA.assets;
+  const last = as[4], prev = as[3];
+
+  document.getElementById('kpi-assets').innerHTML = [
+    kpiCard('Total Assets FY24', '$'+fmt(last.Total_Assets_M/1000,1)+'B', delta(last.Total_Assets_M,prev.Total_Assets_M).arrow+' vs FY23', 'blue','🏛'),
+    kpiCard('Total Loans FY24',  '$'+fmt(last.Total_Loans_M/1000,1)+'B',  `LTD: ${pct(last.Loan_to_Deposit_Pct)}`, 'green','💳'),
+    kpiCard('NPL Ratio FY24',    pct(last.NPL_Ratio_Pct), last.NPL_Ratio_Pct>2.5?'⚠ Above threshold':'✓ Acceptable', last.NPL_Ratio_Pct>2.5?'red':'green','⚠'),
+    kpiCard('Capital Adequacy',  pct(last.Capital_Adequacy_Pct), 'Min. Basel III: 10.5%', 'gold','🛡'),
+    kpiCard('Liquidity Ratio',   pct(last.Liquidity_Ratio_Pct), 'Min. Threshold: 100%', 'blue','💧'),
+  ].join('');
+
+  const labs = as.map(x=>x.Year);
+  makeChart('chart-asset-growth','line', labs, [
+    { label:'Total Assets ($M)',  data:as.map(x=>x.Total_Assets_M),  borderColor:'#1E88E5', tension:.4, pointRadius:5, fill:false },
+    { label:'Total Loans ($M)',   data:as.map(x=>x.Total_Loans_M),   borderColor:'#1B8A4E', tension:.4, pointRadius:5, fill:false },
+    { label:'Total Deposits ($M)',data:as.map(x=>x.Total_Deposits_M),borderColor:'#F9A825', tension:.4, pointRadius:5, fill:false },
+  ]);
+
+  makeChart('chart-npl','bar', labs, [
+    { label:'NPL Ratio (%)', data:as.map(x=>x.NPL_Ratio_Pct),
+      backgroundColor: as.map(x => x.NPL_Ratio_Pct>2.5 ? 'rgba(198,40,40,0.75)' : x.NPL_Ratio_Pct>1.8 ? 'rgba(249,168,37,0.75)' : 'rgba(27,138,78,0.75)'),
+      borderRadius:5 }
+  ]);
+
+  makeChart('chart-cap','line', labs, [
+    { label:'Capital Adequacy (%)', data:as.map(x=>x.Capital_Adequacy_Pct), borderColor:'#1E88E5', tension:.4, pointRadius:5, fill:false },
+    { label:'Liquidity Ratio (%)',  data:as.map(x=>x.Liquidity_Ratio_Pct),  borderColor:'#F9A825', tension:.4, pointRadius:5, fill:false },
+  ]);
+
+  const nplBadge = r => {
+    if(r.NPL_Ratio_Pct>2.5) return `<span class="badge danger">${pct(r.NPL_Ratio_Pct)} High</span>`;
+    if(r.NPL_Ratio_Pct>1.8) return `<span class="badge warning">${pct(r.NPL_Ratio_Pct)} Watch</span>`;
+    return `<span class="badge good">${pct(r.NPL_Ratio_Pct)} OK</span>`;
+  };
+  const tbody = as.map(r => `<tr>
+    <td class="bold">${r.Year}</td>
+    <td class="right">${fmtM(r.Total_Assets_M)}</td>
+    <td class="right">${fmtM(r.Total_Loans_M)}</td>
+    <td class="right">${fmtM(r.Total_Deposits_M)}</td>
+    <td class="right">${nplBadge(r)}</td>
+    <td class="right">${pct(r.Capital_Adequacy_Pct)}</td>
+    <td class="right">${pct(r.Liquidity_Ratio_Pct)}</td>
+    <td class="right">${pct(r.Loan_to_Deposit_Pct)}</td>
+  </tr>`).join('');
+  document.getElementById('table-assets').innerHTML =
+    `<thead><tr><th>Year</th><th>Total Assets</th><th>Loans</th><th>Deposits</th><th>NPL Ratio</th><th>Capital Adq.</th><th>Liquidity</th><th>L/D Ratio</th></tr></thead><tbody>${tbody}</tbody>`;
+})();
+
+// ═══════════════ SEGMENTS ════════════════════════════════════════════════════
+(function() {
+  const segs = DATA.segments;
+  const years = [2020,2021,2022,2023,2024];
+  const segNames = ['Retail Banking','Corporate Banking','Wealth Management','Investment Banking','Treasury'];
+
+  const seg2024 = segs.filter(x=>x.Year===2024).sort((a,b)=>b.Revenue_M-a.Revenue_M);
+  const total24 = seg2024.reduce((a,x)=>a+x.Revenue_M,0);
+  const topSeg  = seg2024[0];
+
+  document.getElementById('kpi-segments').innerHTML = [
+    kpiCard('Total Revenue FY24', fmtM(total24), '5 business segments', 'blue','🗂'),
+    kpiCard('Top Segment FY24', topSeg.Segment.split(' ')[0], fmtM(topSeg.Revenue_M), 'green','🏆'),
+    kpiCard('Fastest Growing', 'Wealth Mgmt.', `+${pct(seg2024.find(x=>x.Segment==='Wealth Management').Growth_Pct)} YoY`, 'gold','🚀'),
+    kpiCard('No. of Segments', '5', 'Retail · Corp · Wealth · IB · Treasury', 'blue','🔢'),
+  ].join('');
+
+  // Stacked bar by year
+  const datasets = segNames.map((s,i) => ({
+    label: s, backgroundColor: COLORS[i],
+    data: years.map(yr => {
+      const row = segs.find(x=>x.Year===yr&&x.Segment===s);
+      return row ? row.Revenue_M : 0;
+    })
+  }));
+  makeChart('chart-seg-stack','bar', years, datasets, {
+    plugins: { legend: chartDefaults.plugins.legend },
+    scales: {
+      x: { stacked: true, ticks: chartDefaults.scales.x.ticks, grid: chartDefaults.scales.x.grid },
+      y: { stacked: true, ticks: chartDefaults.scales.y.ticks, grid: chartDefaults.scales.y.grid }
+    }
+  });
+
+  makeChart('chart-seg-pie','doughnut',
+    seg2024.map(x=>x.Segment), [{
+      data: seg2024.map(x=>x.Revenue_M),
+      backgroundColor: COLORS, borderWidth:2, borderColor:'#fff'
+    }],
+    { plugins: { legend: { position:'right', labels: chartDefaults.plugins.legend.labels } }, scales: {} }
+  );
+
+  // Horizontal bar chart
+  const barsEl = document.getElementById('seg-bars-2024');
+  barsEl.innerHTML = seg2024.map((s,i) => `
+    <div class="seg-row">
+      <div class="seg-name">${s.Segment}</div>
+      <div class="seg-bar-wrap"><div class="seg-bar" style="width:${(s.Revenue_M/total24*100).toFixed(1)}%;background:${COLORS[i]}"></div></div>
+      <div class="seg-val">${fmtM(s.Revenue_M)}</div>
+    </div>`).join('');
+
+  // Table: pivot
+  const tbody = segNames.map((seg, i) => {
+    const row = years.map(yr => { const r = segs.find(x=>x.Year===yr&&x.Segment===seg); return r ? r.Revenue_M : 0; });
+    const total = row.reduce((a,x)=>a+x,0);
+    const share = (segs.find(x=>x.Year===2024&&x.Segment===seg)?.Revenue_M||0)/total24*100;
+    return `<tr>
+      <td class="bold" style="color:${COLORS[i]}">${seg}</td>
+      ${row.map(v=>`<td class="right">${fmtM(v)}</td>`).join('')}
+      <td class="right bold">${fmtM(total)}</td>
+      <td class="right">${pct(share)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('table-segments').innerHTML =
+    `<thead><tr><th>Segment</th>${years.map(y=>`<th>${y}</th>`).join('')}<th>5Y Total</th><th>2024 Share</th></tr></thead><tbody>${tbody}</tbody>`;
+})();
+
+// ═══════════════ QUARTERLY ═══════════════════════════════════════════════════
+(function() {
+  const q = DATA.quarterly;
+  const totalRev = q.reduce((a,x)=>a+x.Revenue_M,0);
+  const totalNI  = q.reduce((a,x)=>a+x.Net_Income_M,0);
+  const avgROE   = q.reduce((a,x)=>a+x.ROE_Pct,0)/4;
+  const totalEPS = q.reduce((a,x)=>a+x.EPS,0);
+
+  document.getElementById('kpi-quarterly').innerHTML = [
+    kpiCard('FY2024 Revenue',    fmtM(totalRev),  '4 quarters combined', 'blue','💰'),
+    kpiCard('FY2024 Net Income', fmtM(totalNI),   `Avg ${fmtM(totalNI/4)}/quarter`, 'green','📈'),
+    kpiCard('Avg Quarterly ROE', pct(avgROE),      'FY2024 average', 'gold','📊'),
+    kpiCard('FY2024 EPS Total',  '$'+fmt(totalEPS,2), 'Sum of Q1–Q4 EPS', 'blue','💵'),
+  ].join('');
+
+  const labs = q.map(x=>x.Quarter);
+  makeChart('chart-q-bar','bar', labs, [
+    { label:'Revenue ($M)',    data:q.map(x=>x.Revenue_M),    backgroundColor:'rgba(30,136,229,0.75)', borderRadius:5 },
+    { label:'Expenses ($M)',   data:q.map(x=>x.Expenses_M),   backgroundColor:'rgba(198,40,40,0.65)',  borderRadius:5 },
+    { label:'Net Income ($M)', data:q.map(x=>x.Net_Income_M), backgroundColor:'rgba(27,138,78,0.75)',  borderRadius:5 },
+  ]);
+
+  makeChart('chart-q-eps','bar', labs, [
+    { label:'EPS ($)', data:q.map(x=>x.EPS),
+      backgroundColor:['rgba(30,136,229,0.8)','rgba(27,138,78,0.8)','rgba(249,168,37,0.8)','rgba(198,40,40,0.8)'],
+      borderRadius:5 }
+  ]);
+
+  makeChart('chart-q-roe','line', labs, [
+    { label:'ROE (%)', data:q.map(x=>x.ROE_Pct), borderColor:'#1B8A4E',
+      backgroundColor:'rgba(27,138,78,0.08)', fill:true, tension:.4, pointRadius:6 }
+  ]);
+
+  const tbody = q.map((r,i) => {
+    const prev = i>0 ? q[i-1] : null;
+    const d = prev ? delta(r.Revenue_M, prev.Revenue_M) : null;
+    const expRatio = (r.Expenses_M/r.Revenue_M*100).toFixed(1);
+    return `<tr>
+      <td class="bold">${r.Quarter}</td>
+      <td class="right">${fmtM(r.Revenue_M)}</td>
+      <td class="right">${fmtM(r.Expenses_M)}</td>
+      <td class="right">${fmtM(r.Net_Income_M)}</td>
+      <td class="right">$${fmt(r.EPS,2)}</td>
+      <td class="right">${pct(r.ROE_Pct)}</td>
+      <td class="right">${expRatio}%</td>
+      <td class="right ${d?d.cls:''}">${d ? d.arrow+' '+fmt(Math.abs(d.val))+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+  // Totals
+  const tot = `<tr style="background:#F0F4F8;font-weight:700">
+    <td>FULL YEAR</td>
+    <td class="right">${fmtM(q.reduce((a,x)=>a+x.Revenue_M,0))}</td>
+    <td class="right">${fmtM(q.reduce((a,x)=>a+x.Expenses_M,0))}</td>
+    <td class="right">${fmtM(q.reduce((a,x)=>a+x.Net_Income_M,0))}</td>
+    <td class="right">$${fmt(q.reduce((a,x)=>a+x.EPS,0),2)}</td>
+    <td class="right">${pct(q.reduce((a,x)=>a+x.ROE_Pct,0)/4)}</td>
+    <td class="right">—</td><td class="right">—</td>
+  </tr>`;
+  document.getElementById('table-quarterly').innerHTML =
+    `<thead><tr><th>Quarter</th><th>Revenue</th><th>Expenses</th><th>Net Income</th><th>EPS</th><th>ROE</th><th>Exp. Ratio</th><th>QoQ Δ</th></tr></thead><tbody>${tbody}${tot}</tbody>`;
+})();
+</script>
+</body>
+</html>
