@@ -1,6 +1,6 @@
 # 🏦 Financial Performance Dashboard — Apex Bank
 
-![Dashboard Preview](![Uploading Screenshot 2026-04-16 105948.png…])
+
 
 > A complete, end-to-end Financial Performance Dashboard project demonstrating KPI tracking, data visualization, and financial analysis for a banking institution. Built with **Python**, **Excel (openpyxl)**, and an interactive **HTML/Chart.js dashboard** — suitable for showcasing Data Analytics, Business Intelligence, and Banking domain skills on GitHub.
 
