@@ -226,3 +226,26 @@ Built as a portfolio project demonstrating **Financial Analytics**, **Data Visua
 ## 📸 Dashboard Preview
 
 
+
+
+### Overview
+![Overview 1](screenshots/Screenshot%202026-04-15%20023103.png)
+![Overview 2](screenshots/Screenshot%202026-04-15%20023327.png)
+
+### Monthly P&L
+![Monthly P&L 1](screenshots/Screenshot%202026-04-15%20023400.png)
+![Monthly P&L 2](screenshots/Screenshot%202026-04-15%20023424.png)
+![Monthly P&L 3](screenshots/Screenshot%202026-04-15%20023430.png)
+![Monthly P&L 4](screenshots/Screenshot%202026-04-15%20023445.png)
+![Monthly P&L 5](screenshots/Screenshot%202026-04-15%20023504.png)
+
+### Asset Quality
+![Asset Quality 1](screenshots/Screenshot%202026-04-15%20023522.png)
+![Asset Quality 2](screenshots/Screenshot%202026-04-15%20023542.png)
+
+### Business Segments
+![Business Segment 1](screenshots/Screenshot%202026-04-15%20023557.png)
+![Business Segment 2](screenshots/Screenshot%202026-04-15%20023613.png)
+![Business Segment 3](screenshots/Screenshot%202026-04-15%20023628.png)
+
+
